@@ -9,6 +9,26 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  django_app:
+    build: .
+    container_name: teamfinder_django_app
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"  # Проброс порта для доступа к приложению
+    volumes:
+      - .:/app       # Монтируем код для горячей перезагрузки
+    depends_on:
+      db:
+        condition: service_healthy  # Ждем, пока БД запустится
+    command: python manage.py runserver 0.0.0.0:8000  # Команда запуска
+    restart: always
 
 volumes:
   postgres_data:

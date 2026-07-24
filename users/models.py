@@ -1,0 +1,72 @@
+from django.db import models
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+from django.utils.translation import gettext_lazy as _
+
+
+class CustomUserManager(BaseUserManager):
+    """
+    Кастомный менеджер пользователей,
+    где email используется как уникальный идентификатор.
+    """
+    def create_user(self, email, password, **extra_fields):
+        """
+        Создаёт и сохраняет обычного пользователя.
+        """
+        if not email:
+            raise ValueError(_('Email обязателен для регистрации'))
+
+        email = self.normalize_email(email)
+
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)  # Хешируем пароль
+        user.save(using=self._db)
+
+        return user
+
+    def create_superuser(self, email, password, **extra_fields):
+        """
+        Создаёт и сохраняет суперпользователя (админа).
+        """
+
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('is_active', True)
+
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError(_('Суперпользователь должен иметь is_staff=True.'))
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError(_(
+                'Суперпользователь должен иметь is_superuser=True.'))
+
+        return self.create_user(email, password, **extra_fields)
+
+
+class User(AbstractBaseUser):
+    email = models.EmailField(unique=True)
+    name = models.CharField(max_length=124)
+    surname = models.CharField(max_length=124)
+
+    avatar = models.ImageField(
+        upload_to='avatars/',
+        blank=True,
+        # Если не передана картинка,
+        #  то нужно сгенерировать по умолчанию и положить ее в бд
+        null=True
+    )
+
+    phone = models.CharField(max_length=12)
+    github_url = models.URLField(blank=True, null=True)
+    about = models.TextField(max_length=256, blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
+
+    USERNAME_FIELD = 'email'
+    EMAIL_FIELD = 'email'
+    REQUIRED_FIELDS = ['name', 'surname', 'phone']
+
+    objects = CustomUserManager()
+
+    def __str__(self):
+        return self.name + ' ' + self.surname or self.email
+
+
