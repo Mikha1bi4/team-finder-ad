@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager,  PermissionsMixin
 from django.utils.translation import gettext_lazy as _
 
 
@@ -16,6 +16,9 @@ class CustomUserManager(BaseUserManager):
             raise ValueError(_('Email обязателен для регистрации'))
 
         email = self.normalize_email(email)
+        extra_fields.setdefault('name', '')
+        extra_fields.setdefault('surname', '')
+        extra_fields.setdefault('phone', '')
 
         user = self.model(email=email, **extra_fields)
         user.set_password(password)  # Хешируем пароль
@@ -32,6 +35,10 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_active', True)
 
+        extra_fields.setdefault('name', 'Admin')
+        extra_fields.setdefault('surname', 'Superuser')
+        extra_fields.setdefault('phone', '0000000000')
+
         if extra_fields.get('is_staff') is not True:
             raise ValueError(_('Суперпользователь должен иметь is_staff=True.'))
         if extra_fields.get('is_superuser') is not True:
@@ -41,7 +48,11 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 
-class User(AbstractBaseUser):
+class Skills(models.Model):
+    name = models.CharField(max_length=124)
+
+
+class User(AbstractBaseUser,  PermissionsMixin):
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=124)
     surname = models.CharField(max_length=124)
@@ -60,6 +71,8 @@ class User(AbstractBaseUser):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
+    skills = models.ManyToManyField(Skills, blank=True, related_name='users')
+
     USERNAME_FIELD = 'email'
     EMAIL_FIELD = 'email'
     REQUIRED_FIELDS = ['name', 'surname', 'phone']
@@ -67,6 +80,8 @@ class User(AbstractBaseUser):
     objects = CustomUserManager()
 
     def __str__(self):
-        return self.name + ' ' + self.surname or self.email
+        if self.name and self.surname:
+            return f"{self.name} {self.surname}"
+        return self.email
 
 

@@ -3,8 +3,6 @@ from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# TODO: Создать и заполнить .env, ориентируясь на .env_example
-
 SECRET_KEY = config("DJANGO_SECRET_KEY")
 
 DEBUG = config("DJANGO_DEBUG", default=False, cast=bool)
@@ -93,6 +91,7 @@ if not DEBUG:
             },
         ]
     )
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
