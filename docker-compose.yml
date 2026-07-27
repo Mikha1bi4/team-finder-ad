@@ -10,7 +10,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]  # Используем $$ для экранирования
       interval: 10s
       timeout: 5s
       retries: 5
@@ -21,14 +21,15 @@ services:
     env_file:
       - .env
     ports:
-      - "8000:8000"  # Проброс порта для доступа к приложению
+      - "8000:8000"
     volumes:
-      - .:/app       # Монтируем код для горячей перезагрузки
+      - .:/app
     depends_on:
       db:
-        condition: service_healthy  # Ждем, пока БД запустится
-    command: python manage.py runserver 0.0.0.0:8000  # Команда запуска
+        condition: service_healthy
+    command: python manage.py runserver 0.0.0.0:8000
     restart: always
 
 volumes:
   postgres_data:
+  
