@@ -65,7 +65,9 @@ class User(AbstractBaseUser,  PermissionsMixin):
         null=True
     )
 
-    phone = models.CharField(max_length=12)
+    # В рекомендациях написано, что это обязательное поле,
+    #  но при регистрации оно не запрашивается
+    phone = models.CharField(max_length=12, null=True)
     github_url = models.URLField(blank=True, null=True)
     about = models.TextField(max_length=256, blank=True, null=True)
     is_active = models.BooleanField(default=True)
@@ -75,7 +77,7 @@ class User(AbstractBaseUser,  PermissionsMixin):
 
     USERNAME_FIELD = 'email'
     EMAIL_FIELD = 'email'
-    REQUIRED_FIELDS = ['name', 'surname', 'phone']
+    REQUIRED_FIELDS = ['name', 'surname']
 
     objects = CustomUserManager()
 
@@ -83,5 +85,3 @@ class User(AbstractBaseUser,  PermissionsMixin):
         if self.name and self.surname:
             return f"{self.name} {self.surname}"
         return self.email
-
-

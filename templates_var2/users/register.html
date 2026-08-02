@@ -17,7 +17,8 @@
             <div>{{ form.surname.label_tag }} {{ form.surname }}</div>
         </div>
         {{ form.email.label_tag }} {{ form.email }}
-        {{ form.password.label_tag }} {{ form.password }}
+        {{ form.password1.label_tag }} {{ form.password1 }}
+        {{ form.password2.label_tag }} {{ form.password2 }}
         {% for error in form.errors.values %}
         <p style="color: red;">{{error}}</p>
         {% endfor %}

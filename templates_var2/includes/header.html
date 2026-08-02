@@ -56,6 +56,11 @@
             {% include 'includes/svg/share.html' %} Поделиться профилем
         </a>
         <hr class="sidebar-divider">
-        <a href="/users/logout/"><span style="color: #e7000b;">{% include 'includes/svg/leave.html' %} Выйти</span></a>
+        <form method="post" action="{% url 'users:logout' %}">
+            {% csrf_token %}
+            <button type="submit" style="background: none; border: none; padding: 0; cursor: pointer; color: #e7000b; font: inherit;">
+                {% include 'includes/svg/leave.html' %} Выйти
+            </button>
+        </form>
     </div>
 </div>
