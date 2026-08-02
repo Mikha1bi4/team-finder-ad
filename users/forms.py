@@ -43,7 +43,7 @@ class UserRegisterForm(UserCreationForm):
         labels = {
             'name': 'Имя',
             'surname': 'Фамилия',
-            'email': 'Электронная почта',
+            'email': 'Email',
         }
         widgets = {
             'email': forms.EmailInput(attrs={

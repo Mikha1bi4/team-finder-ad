@@ -2,6 +2,7 @@ from django.urls import include, path, reverse_lazy
 from .forms import UserRegisterForm, UserLoginForm
 from django.views.generic.edit import CreateView
 from django.contrib.auth.views import LoginView, LogoutView
+from .views import UserListView
 
 app_name = 'users'
 urlpatterns = [
@@ -24,4 +25,6 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(
         next_page='users:login'
     ), name='logout'),
+    path('list/', UserListView.as_view(
+         template_name='users/participants.html'), name='list'),
 ]

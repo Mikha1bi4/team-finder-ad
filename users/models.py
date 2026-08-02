@@ -48,8 +48,11 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 
-class Skills(models.Model):
+class Skill(models.Model):
     name = models.CharField(max_length=124)
+
+    def __str__(self):
+        return self.name
 
 
 class User(AbstractBaseUser,  PermissionsMixin):
@@ -73,7 +76,7 @@ class User(AbstractBaseUser,  PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
-    skills = models.ManyToManyField(Skills, blank=True, related_name='users')
+    skills = models.ManyToManyField(Skill, blank=True, related_name='users')
 
     USERNAME_FIELD = 'email'
     EMAIL_FIELD = 'email'
