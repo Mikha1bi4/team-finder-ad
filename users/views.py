@@ -6,6 +6,7 @@ class UserListView(ListView):
     model = User
     ordering = 'id'
     paginate_by = 12
+    template_name = 'users/participants.html'
 
     def get_queryset(self):
         queryset = super().get_queryset()

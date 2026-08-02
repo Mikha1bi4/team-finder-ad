@@ -25,6 +25,5 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(
         next_page='users:login'
     ), name='logout'),
-    path('list/', UserListView.as_view(
-         template_name='users/participants.html'), name='list'),
+    path('list/', UserListView.as_view(), name='list'),
 ]
