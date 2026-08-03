@@ -2,7 +2,7 @@ from django.urls import include, path, reverse_lazy
 from .forms import UserRegisterForm, UserLoginForm
 from django.views.generic.edit import CreateView
 from django.contrib.auth.views import LoginView, LogoutView
-from .views import UserListView
+from .views import UserListView, UserDetailView, get_skills, add_skill, remove_skill
 
 app_name = 'users'
 urlpatterns = [
@@ -25,5 +25,10 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(
         next_page='users:login'
     ), name='logout'),
+    path('skills/', get_skills, name='get_skills'),
     path('list/', UserListView.as_view(), name='list'),
+    path('<int:pk>/', UserDetailView.as_view(), name='detail'),
+    path('<int:pk>/skills/add/', add_skill, name='add_skill'),
+    path('<int:pk>/skills/<int:skill_id>/remove/',
+         remove_skill, name='remove_skill'),
 ]

@@ -49,7 +49,7 @@ class CustomUserManager(BaseUserManager):
 
 
 class Skill(models.Model):
-    name = models.CharField(max_length=124)
+    name = models.CharField(max_length=124, unique=True)
 
     def __str__(self):
         return self.name
