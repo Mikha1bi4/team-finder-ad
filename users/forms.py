@@ -1,6 +1,7 @@
 from django import forms
 from .models import User
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from .validators import validate_phone_number, validate_github_url
 
 
 class UserLoginForm(AuthenticationForm):
@@ -59,3 +60,57 @@ class UserRegisterForm(UserCreationForm):
                 'placeholder': 'Введите вашу фамилию',
             }),
         }
+
+
+class UserUpdateForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ('name', 'surname', 'avatar', 'about', 'phone', 'github_url')
+        labels = {
+            'name': 'Имя',
+            'surname': 'Фамилия',
+            'avatar': 'Аватар',
+            'about': 'О себе',
+            'phone': 'Телефон',
+            'github_url': 'GitHub',
+        }
+
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Введите ваше имя',
+                'maxlength': '124',
+            }),
+            'surname': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Введите вашу фамилию',
+                'maxlength': '124',
+            }),
+            'avatar': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': 'image/*',
+            }),
+            'about': forms.Textarea(attrs={
+                'class': 'form-control',
+                'placeholder': 'Расскажите о себе...',
+                'rows': 5,
+                'maxlength': '256',
+            }),
+            'phone': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '+7 999 123 45 67',
+                'type': 'tel',
+            }),
+            'github_url': forms.URLInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'https://github.com/username',
+                'type': 'url',
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Добавляем валидаторы
+        self.fields['phone'].validators.append(validate_phone_number)
+        self.fields['github_url'].validators.append(validate_github_url)

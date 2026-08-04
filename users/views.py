@@ -1,10 +1,13 @@
-from django.views.generic import ListView, DetailView
+from django.views.generic import ListView, DetailView, UpdateView
 from .models import User, Skill
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.shortcuts import get_object_or_404
 import json
+from .forms import UserUpdateForm
+from django.urls import reverse_lazy
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
 
 class UserListView(ListView):
@@ -47,6 +50,23 @@ def get_skills(request):
 
     skills = Skill.objects.filter(name__startswith=s).order_by('name')[:10]
     return JsonResponse(list(skills.values('id', 'name')), safe=False)
+
+
+class UserUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = User
+    form_class = UserUpdateForm
+    template_name = 'users/edit_profile.html'
+
+    def get_object(self, queryset=None):
+        """Всегда возвращаем текущего пользователя"""
+        return self.request.user
+
+    def get_success_url(self):
+        return reverse_lazy('users:detail', kwargs={'pk': self.object.pk})
+
+    def test_func(self):
+        user = self.get_object()
+        return self.request.user == user
 
 
 @login_required
