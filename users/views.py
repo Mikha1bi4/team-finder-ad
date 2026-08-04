@@ -7,7 +7,8 @@ from django.shortcuts import get_object_or_404
 import json
 from .forms import UserUpdateForm
 from django.urls import reverse_lazy
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.views import PasswordChangeView
 
 
 class UserListView(ListView):
@@ -52,7 +53,7 @@ def get_skills(request):
     return JsonResponse(list(skills.values('id', 'name')), safe=False)
 
 
-class UserUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+class UserUpdateView(LoginRequiredMixin, UpdateView):
     model = User
     form_class = UserUpdateForm
     template_name = 'users/edit_profile.html'
@@ -64,9 +65,16 @@ class UserUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     def get_success_url(self):
         return reverse_lazy('users:detail', kwargs={'pk': self.object.pk})
 
-    def test_func(self):
-        user = self.get_object()
-        return self.request.user == user
+
+class UserPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
+    template_name = 'users/change_password.html'
+
+    def get_object(self, queryset=None):
+        """Всегда возвращаем текущего пользователя"""
+        return self.request.user
+
+    def get_success_url(self):
+        return reverse_lazy('users:detail', kwargs={'pk': self.request.user.pk})
 
 
 @login_required

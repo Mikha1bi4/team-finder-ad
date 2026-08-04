@@ -1,7 +1,12 @@
 from django import forms
 from .models import User
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, PasswordChangeForm
 from .validators import validate_phone_number, validate_github_url
+from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
+
+
+User = get_user_model()
 
 
 class UserLoginForm(AuthenticationForm):

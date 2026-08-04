@@ -3,7 +3,8 @@ from .forms import UserRegisterForm, UserLoginForm
 from django.views.generic.edit import CreateView
 from django.contrib.auth.views import LoginView, LogoutView
 from .views import (UserListView, UserDetailView, get_skills,
-                    add_skill, remove_skill, UserUpdateView)
+                    add_skill, remove_skill,
+                    UserUpdateView, UserPasswordChangeView)
 
 app_name = 'users'
 urlpatterns = [
@@ -30,6 +31,8 @@ urlpatterns = [
     path('list/', UserListView.as_view(), name='list'),
     path('<int:pk>/', UserDetailView.as_view(), name='detail'),
     path('edit-profile/', UserUpdateView.as_view(), name='edit-profile'),
+    path('change-password/', UserPasswordChangeView.as_view(),
+         name='change-password'),
     path('<int:pk>/skills/add/', add_skill, name='add_skill'),
     path('<int:pk>/skills/<int:skill_id>/remove/',
          remove_skill, name='remove_skill'),
