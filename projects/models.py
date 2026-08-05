@@ -4,8 +4,8 @@ from users.models import User
 
 class Project(models.Model):
     class Status(models.TextChoices):
-        OPEN = 'open', 'Open'
-        CLOSED = 'closed', 'Closed'
+        OPEN = 'open', 'Открыт'
+        CLOSED = 'closed', 'Закрыт'
 
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True, null=True)

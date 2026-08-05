@@ -1,9 +1,12 @@
-from django.views.generic import ListView, DetailView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from .models import Project
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
+from .forms import ProjectForm
+from django.shortcuts import render
+from django.urls import reverse_lazy
 
 
 class ProjectListView(ListView):
@@ -60,3 +63,42 @@ def toggle_participate(request, pk):
             "avatar": getattr(request.user, 'avatar_url', ''),
         } if not is_participating else None  # Если добавили, возвращаем данные
     })
+
+
+class ProjectCreateView(CreateView):
+    model = Project
+    form_class = ProjectForm
+    template_name = 'projects/create-project.html'
+
+    def form_valid(self, form):
+        project = form.save(commit=False)
+        project.owner = self.request.user
+        project.save()
+        project.participants.add(self.request.user)
+
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        if self.request.method == 'GET':
+            context['is_edit'] = False
+
+        return context
+
+    def get_success_url(self):
+        return reverse_lazy('projects:detail', kwargs={'pk': self.object.pk})
+
+
+class ProjectUpdateView(UpdateView):
+    model = Project
+    form_class = ProjectForm
+    template_name = 'projects/create-project.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['is_edit'] = True
+        return context
+
+    def get_success_url(self):
+        return reverse_lazy('projects:detail', kwargs={'pk': self.object.pk})

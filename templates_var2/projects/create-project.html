@@ -46,7 +46,7 @@
     {% endif %}
 
     <div class="form-actions">
-      <a href="/" class="cancel-button">Отмена</a>
+      <a href="{% url 'projects:list' %}" class="cancel-button">Отмена</a>
       <button type="submit" class="save-button">{% if is_edit %}Сохранить{% else %}Опубликовать{% endif %}</button>
     </div>
   </form>
