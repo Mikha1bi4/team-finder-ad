@@ -8,7 +8,7 @@ from django.core.files.base import ContentFile
 
 
 def generate_avatar(name, email):
-    email = email.split('.')[0].replace('@', '')
+    email = email.replace('.', '').replace('@', '')
     size = 200
     colors = [
         (200, 180, 230),
@@ -126,7 +126,7 @@ class User(AbstractBaseUser,  PermissionsMixin):
 
     avatar = models.ImageField(
         upload_to='avatars/',
-        default='default-avatar.png'
+        default='avatars/default-avatar.png'
     )
 
     # В рекомендациях написано, что это обязательное поле,
