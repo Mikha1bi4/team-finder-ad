@@ -1,6 +1,70 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.utils.translation import gettext_lazy as _
+from PIL import Image, ImageDraw, ImageFont
+import random
+from io import BytesIO
+from django.core.files.base import ContentFile
+
+
+def generate_avatar(name, email):
+    email = email.split('.')[0].replace('@', '')
+    size = 200
+    colors = [
+        (200, 180, 230),
+        (220, 190, 240),
+        (190, 170, 220),
+        (180, 200, 230),
+        (190, 215, 235),
+        (170, 195, 225),
+        (200, 220, 240),
+        (200, 220, 180),
+        (190, 215, 175),
+        (210, 230, 190),
+        (180, 210, 195),
+        (230, 180, 180),
+        (240, 190, 200),
+        (225, 175, 185),
+        (235, 200, 200),
+        (230, 210, 170),
+        (240, 220, 180),
+        (235, 215, 175),
+        (225, 200, 160),
+        (230, 190, 170),
+        (240, 200, 180),
+        (225, 185, 165),
+        (235, 205, 185),
+        (210, 210, 220),
+        (200, 200, 210),
+        (215, 215, 215),
+        (195, 195, 205),
+        (170, 215, 215),
+        (185, 210, 215),
+        (175, 205, 200),
+        (190, 220, 215),
+        (220, 180, 210),
+        (210, 185, 215),
+        (225, 195, 215),
+        (215, 190, 220),
+    ]
+    bg = random.choice(colors)
+
+    img = Image.new('RGB', (size, size), bg)
+    draw = ImageDraw.Draw(img)
+
+    font = ImageFont.truetype(
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", size//2)
+
+    text = name[0].upper()
+
+    # Используем anchor для центрирования
+    # 'mm' означает middle-middle (центр по вертикали и горизонтали)
+    draw.text((size//2, size//2), text, fill=(255, 255, 255),
+              font=font, anchor='mm')
+
+    buffer = BytesIO()
+    img.save(buffer, format='PNG')
+    return ContentFile(buffer.getvalue(), name=f'avatar_{email}.png')
 
 
 class CustomUserManager(BaseUserManager):
@@ -62,15 +126,12 @@ class User(AbstractBaseUser,  PermissionsMixin):
 
     avatar = models.ImageField(
         upload_to='avatars/',
-        blank=True,
-        # Если не передана картинка,
-        #  то нужно сгенерировать по умолчанию и положить ее в бд
-        null=True
+        default='default-avatar.png'
     )
 
     # В рекомендациях написано, что это обязательное поле,
     #  но при регистрации оно не запрашивается
-    phone = models.CharField(max_length=12, null=True)
+    phone = models.CharField(max_length=12, null=True, blank=True)
     github_url = models.URLField(blank=True, null=True)
     about = models.TextField(max_length=256, blank=True, null=True)
     is_active = models.BooleanField(default=True)
@@ -88,3 +149,8 @@ class User(AbstractBaseUser,  PermissionsMixin):
         if self.name and self.surname:
             return f"{self.name} {self.surname}"
         return self.email
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+           self.avatar = generate_avatar(self.name, self.email)
+        super().save(*args, **kwargs)

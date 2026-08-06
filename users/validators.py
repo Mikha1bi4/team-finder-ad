@@ -4,7 +4,10 @@ from .models import User
 from django.core.validators import URLValidator
 
 
-def validate_phone_number(phone: str) -> None:
+def validate_phone_number(phone: str, id: int = 0) -> None:
+    if not phone:
+        return
+    
     if not phone.startswith('+7') and not phone.startswith('8'):
         raise ValidationError(
             'Номер должен начинаться с +7 или 8.'
@@ -15,13 +18,20 @@ def validate_phone_number(phone: str) -> None:
 
     if not re.fullmatch(r'^\+7\d{10}$', phone):
         raise ValidationError(
-                    'Номер должен состоять только из цифр.'
+                    'Номер должен состоять из 11 цифр.'
                 )
-
-    if User.objects.filter(phone=phone).exists():
-        raise ValidationError(
+    if id:
+        if User.objects.filter(phone=phone).exclude(id=id).exists():
+            raise ValidationError(
                         'Данный номер уже используется другим пользователем'
                     )
+    else:
+        if User.objects.filter(phone=phone).exists():
+            raise ValidationError(
+                        'Данный номер уже используется другим пользователем'
+                    )
+
+    return phone
 
 
 def validate_github_url(link: str) -> None:

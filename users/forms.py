@@ -117,5 +117,12 @@ class UserUpdateForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         # Добавляем валидаторы
-        self.fields['phone'].validators.append(validate_phone_number)
+        # self.fields['phone'].validators.append(validate_phone_number)
         self.fields['github_url'].validators.append(validate_github_url)
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone')
+        if self.instance.pk:
+            return validate_phone_number(phone, self.instance.pk)
+        else:
+            return validate_phone_number(phone)
