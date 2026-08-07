@@ -25,17 +25,43 @@ class UserListView(ListView):
             queryset = queryset.filter(
                 skills__name__icontains=skill).distinct()
 
+        received_filter = self.request.GET.get('filter')
+
+        if self.request.user.is_authenticated and received_filter:
+            if received_filter == 'owners-of-favorite-projects':
+                owner_ids = self.request.user.favorites.values_list(
+                    'owner', flat=True).distinct()
+                queryset = User.objects.filter(id__in=owner_ids)
+            elif received_filter == 'owners-of-participating-projects':
+                owner_ids = self.request.user.participating_projects.values_list(
+                                    'owner', flat=True).distinct()
+                queryset = User.objects.filter(id__in=owner_ids)
+            elif received_filter == 'interested-in-my-projects':
+                user_ids = self.request.user.owned_projects.values_list(
+                                                'interested_users',
+                                                flat=True).distinct()
+                queryset = User.objects.filter(id__in=user_ids)
+            elif received_filter == 'participants-of-my-projects':
+                user_ids = self.request.user.owned_projects.values_list(
+                                    'participants',
+                                    flat=True).distinct()
+                queryset = User.objects.filter(id__in=user_ids)
+
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        context["participants"] = self.get_queryset()
-        context["all_skills"] = Skill.objects.all()
+        context["all_skills"] = Skill.objects.values_list('name', flat=True)
 
         skill = self.request.GET.get('skill')
         if skill:
             context["active_skill"] = skill
+
+        filt = self.request.GET.get('filter')
+        if filt:
+            context["active_filter"] = filt
+
         return context
 
 

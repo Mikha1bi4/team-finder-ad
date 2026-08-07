@@ -16,30 +16,24 @@ class ProjectListView(ListView):
     paginate_by = 12
     template_name = 'projects/project_list.html'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        if self.request.method == 'GET':
-            active_skill = self.request.GET.get('skill')
-            context['all_skills'] = Skill.objects.all()
-            if active_skill:
-                filtered_projects = Project.objects.filter(
-                    skills__name=active_skill)
-                context['projects'] = filtered_projects
-                context['active_skill'] = active_skill
-
-        return context
-
     def get_queryset(self):
         queryset = super().get_queryset()
         skill = self.request.GET.get('skill')
 
         if skill:
-            queryset = queryset.filter(skills__name=skill)
-
-        queryset = queryset.order_by('-created_at')
+            queryset = queryset.filter(
+                skills__name=skill).order_by('-created_at')
 
         return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        active_skill = self.request.GET.get('skill', '')
+        context['active_skill'] = active_skill
+        context['all_skills'] = Skill.objects.values_list('name', flat=True)
+
+        return context
 
 
 class ProjectDetailView(DetailView):
