@@ -18,6 +18,21 @@
     </div>
     <p class="project-subtitle">Найдите интересный проект и присоединитесь к команде</p>
 
+    <div class="skills-filter">
+        <span class="filter-label">Фильтр по необходимым навыкам:</span>
+        <div class="filter-chips">
+            {% for skill in all_skills %}
+            <a href="?skill={{ skill }}"
+               class="filter-chip {% if active_skill == skill %}active{% endif %}">
+                {{ skill }}
+            </a>
+            {% endfor %}
+            {% if active_skill %}
+            <a href="/projects/list" class="filter-reset">Сбросить</a>
+            {% endif %}
+        </div>
+    </div>
+
     <div class="projects-grid">
         {% for project in page_obj %}
         {% include 'includes/project-card.html' %}
