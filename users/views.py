@@ -66,7 +66,6 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
         return reverse_lazy('users:detail', kwargs={'pk': self.object.pk})
 
 
-
 class UserPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
     template_name = 'users/change_password.html'
 

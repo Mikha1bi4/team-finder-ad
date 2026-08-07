@@ -82,7 +82,6 @@ class CustomUserManager(BaseUserManager):
         email = self.normalize_email(email)
         extra_fields.setdefault('name', '')
         extra_fields.setdefault('surname', '')
-        extra_fields.setdefault('phone', '')
 
         user = self.model(email=email, **extra_fields)
         user.set_password(password)  # Хешируем пароль
@@ -137,6 +136,9 @@ class User(AbstractBaseUser,  PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
+    favorites = models.ManyToManyField('projects.Project',
+                                       blank=True,
+                                       related_name='interested_users')
     skills = models.ManyToManyField(Skill, blank=True, related_name='users')
 
     USERNAME_FIELD = 'email'

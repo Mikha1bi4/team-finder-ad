@@ -1,5 +1,5 @@
 from django.db import models
-from users.models import User
+from users.models import User, Skill
 
 
 class Project(models.Model):
@@ -20,3 +20,4 @@ class Project(models.Model):
     participants = models.ManyToManyField(
         User,
         related_name='participating_projects')
+    skills = models.ManyToManyField(Skill, blank=True, related_name='projects')

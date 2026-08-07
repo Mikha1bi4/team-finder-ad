@@ -42,8 +42,7 @@ def complete_project(request, pk):
 @require_POST
 def toggle_participate(request, pk):
     project = get_object_or_404(Project, pk=pk)
-
-    is_participating = request.user in project.participants.all()
+    is_participating = project.participants.filter(id=request.user.id).exists()
 
     if is_participating:
         project.participants.remove(request.user)
@@ -63,6 +62,19 @@ def toggle_participate(request, pk):
             "avatar": getattr(request.user, 'avatar_url', ''),
         } if not is_participating else None  # Если добавили, возвращаем данные
     })
+
+
+@login_required
+@require_POST
+def toggle_favorite(request, pk):
+    project = get_object_or_404(Project, pk=pk)
+    if request.user.favorites.filter(id=pk).exists():
+        request.user.favorites.remove(project)
+        favorited = "Не избранный"
+    else:
+        request.user.favorites.add(project)
+        favorited = "Избранный"
+    return JsonResponse({"status": "ok", "favorited": favorited})
 
 
 class ProjectCreateView(CreateView):
