@@ -154,5 +154,5 @@ class User(AbstractBaseUser,  PermissionsMixin):
 
     def save(self, *args, **kwargs):
         if not self.pk:
-           self.avatar = generate_avatar(self.name, self.email)
+            self.avatar = generate_avatar(self.name, self.email)
         super().save(*args, **kwargs)

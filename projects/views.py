@@ -8,6 +8,7 @@ from .forms import ProjectForm
 from django.shortcuts import render
 from django.urls import reverse_lazy
 from users.models import Skill
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 
 class ProjectListView(ListView):
@@ -34,6 +35,19 @@ class ProjectListView(ListView):
         context['all_skills'] = Skill.objects.values_list('name', flat=True)
 
         return context
+
+
+class FavoritesProjectsListView(LoginRequiredMixin, ListView):
+    model = Project
+    ordering = '-created_at'
+    paginate_by = 12
+    template_name = 'projects/favorite_projects.html'
+
+    def get_queryset(self):
+        queryset = self.request.user.favorites.all().order_by('-created_at')
+        return queryset
+
+
 
 
 class ProjectDetailView(DetailView):
