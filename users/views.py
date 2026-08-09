@@ -72,7 +72,7 @@ class UserDetailView(DetailView):
 
 def get_skills(request):
     s = request.GET.get('q', '')
-    if not s or len(s) < 2:
+    if not s or len(s) < 1:
         return JsonResponse([], safe=False)
 
     skills = Skill.objects.filter(name__startswith=s).order_by('name')[:10]
