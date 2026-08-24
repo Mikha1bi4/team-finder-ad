@@ -34,17 +34,17 @@ class UserListView(ListView):
                 queryset = User.objects.filter(id__in=owner_ids)
             elif received_filter == 'owners-of-participating-projects':
                 owner_ids = self.request.user.participating_projects.values_list(
-                                    'owner', flat=True).distinct()
+                    'owner', flat=True).distinct()
                 queryset = User.objects.filter(id__in=owner_ids)
             elif received_filter == 'interested-in-my-projects':
                 user_ids = self.request.user.owned_projects.values_list(
-                                                'interested_users',
-                                                flat=True).distinct()
+                    'interested_users',
+                    flat=True).distinct()
                 queryset = User.objects.filter(id__in=user_ids)
             elif received_filter == 'participants-of-my-projects':
                 user_ids = self.request.user.owned_projects.values_list(
-                                    'participants',
-                                    flat=True).distinct()
+                    'participants',
+                    flat=True).distinct()
                 queryset = User.objects.filter(id__in=user_ids)
 
         return queryset
@@ -71,7 +71,7 @@ class UserDetailView(DetailView):
 
 
 def get_skills(request):
-    s = request.GET.get('q', '')
+    s = request.GET.get('q', '').lower().capitalize()
     if not s or len(s) < 1:
         return JsonResponse([], safe=False)
 
@@ -160,12 +160,12 @@ def remove_skill(request, pk, skill_id):
 
     if not request.user.skills.filter(id=skill_id).exists():
         return JsonResponse(
-                    {'error':
-                     f"""
+            {'error':
+             f"""
                      Пользователь {request.user.name} {request.user.surname}
                      не обладает навыком с id: {skill_id}
                      """
-                     }, status=404)
+             }, status=404)
 
     request.user.skills.remove(skill_id)
     return JsonResponse({'status': 'ok'})

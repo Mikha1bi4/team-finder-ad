@@ -9,7 +9,9 @@ from django.shortcuts import render
 from django.urls import reverse_lazy
 from users.models import Skill
 import json
+from django.db.models import Q
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import HttpResponseForbidden
 
 
 class ProjectListView(ListView):
@@ -21,6 +23,13 @@ class ProjectListView(ListView):
     def get_queryset(self):
         queryset = super().get_queryset()
         skill = self.request.GET.get('skill')
+
+        if self.request.user.is_authenticated:
+            queryset = queryset.filter(Q(status="open") | Q(status="closed",
+                                       owner=self.request.user)
+                                       ).order_by('-created_at')
+        else:
+            queryset = queryset.filter(Q(status="open"))
 
         if skill:
             queryset = queryset.filter(
@@ -110,7 +119,7 @@ def toggle_favorite(request, pk):
     return JsonResponse({"status": "ok", "favorited": favorited})
 
 
-class ProjectCreateView(CreateView):
+class ProjectCreateView(LoginRequiredMixin, CreateView):
     model = Project
     form_class = ProjectForm
     template_name = 'projects/create-project.html'
@@ -135,10 +144,17 @@ class ProjectCreateView(CreateView):
         return reverse_lazy('projects:detail', kwargs={'pk': self.object.pk})
 
 
-class ProjectUpdateView(UpdateView):
+class ProjectUpdateView(LoginRequiredMixin, UpdateView):
     model = Project
     form_class = ProjectForm
     template_name = 'projects/create-project.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        project = self.get_object()
+        if project.owner != request.user:
+            # Возвращаем 403 ошибку
+            return HttpResponseForbidden('У вас нет прав на редактирование этого проекта')
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -153,7 +169,7 @@ class ProjectUpdateView(UpdateView):
 @require_POST
 def add_skill(request, pk):
     created = False
-    added = True
+    added = False
 
     try:
         data = json.loads(request.body)
@@ -163,7 +179,7 @@ def add_skill(request, pk):
             'message': 'Неверный формат JSON'
         }, status=400)
 
-    skill_name = data.get('name', '').strip()
+    skill_name = data.get('name', '').strip().lower().capitalize()
     skill_id = data.get('skill_id', '').strip()
 
     project = get_object_or_404(Project, pk=pk)
@@ -181,13 +197,13 @@ def add_skill(request, pk):
         if not request.user.skills.filter(id=skill_id).exists():
             project.skills.add(skill)
             skill_name = skill.name
-        else:
-            added = False
+            added = True
     elif skill_name:
         new_skill = Skill.objects.create(name=skill_name)
         project.skills.add(new_skill)
         skill_id = new_skill.id
         created = True
+        added = True
 
     return JsonResponse(
         {'id': skill_id, 'name': skill_name,
@@ -208,12 +224,12 @@ def remove_skill(request, pk, skill_id):
 
     if not project.skills.filter(id=skill_id).exists():
         return JsonResponse(
-                    {'error':
-                     f"""
+            {'error':
+             f"""
                      Проект {project.name}
                      не обладает навыком с id: {skill_id}
                      """
-                     }, status=404)
+             }, status=404)
 
     project.skills.remove(skill_id)
     return JsonResponse({'status': 'ok'})

@@ -16,26 +16,26 @@ class ProjectForm(forms.ModelForm):
 
         widgets = {
             'name': forms.TextInput(attrs={
-                    'class': 'form-control',
-                    'placeholder': 'Введите название проекта',
-                }),
+                'class': 'form-control',
+                'placeholder': 'Введите название проекта',
+            }),
             'description': forms.TextInput(attrs={
-                    'class': 'form-control',
-                    'placeholder': 'Введите описание проекта',
-                }),
+                'class': 'form-control',
+                'placeholder': 'Введите описание проекта',
+            }),
             'github_url': forms.URLInput(attrs={
-                    'class': 'form-control',
-                    'placeholder': 'https://github.com/username/reponame',
-                    'type': 'url',
-                }),
+                'class': 'form-control',
+                'placeholder': 'https://github.com/username/reponame',
+                'type': 'url',
+            }),
             'status': forms.Select(attrs={
                 'class': 'form-select',
                 'placeholder': 'Выберите статус',
             }),
         }
 
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-            # Добавляем валидаторы
-            self.fields['github_url'].validators.append(validate_github_url)
+        # Добавляем валидаторы
+        self.fields['github_url'].validators.append(validate_github_url)
