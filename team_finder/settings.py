@@ -1,13 +1,20 @@
 from pathlib import Path
 from decouple import config
+import sys
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(BASE_DIR))
 
 SECRET_KEY = config("DJANGO_SECRET_KEY")
 
 DEBUG = config("DJANGO_DEBUG", default=False, cast=bool)
 
 ALLOWED_HOSTS = ["*"]
+
+
+# Настройка тестового раннера для поиска тестов в корне
+TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
 
 # Application definition
@@ -33,6 +40,10 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+]
+
+INTERNAL_IPS = [
+    '127.0.0.1',
 ]
 
 ROOT_URLCONF = "team_finder.urls"
@@ -122,3 +133,5 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+LOGIN_URL = 'users:login'

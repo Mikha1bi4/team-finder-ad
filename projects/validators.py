@@ -20,7 +20,7 @@ def validate_github_url(link: str) -> None:
     validator = URLValidator()
     try:
         validator(link)
-    except ValidationError:
+    except Exception:
         raise ValidationError('Ссылка не является валидной.')
 
     # Проверка, что ссылка ведет на GitHub репозиторий

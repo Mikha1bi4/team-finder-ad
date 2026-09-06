@@ -7,6 +7,11 @@ from django.views.decorators.http import require_POST
 from .forms import ProjectForm
 from django.shortcuts import render
 from django.urls import reverse_lazy
+from users.models import Skill
+import json
+from django.db.models import Q
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import HttpResponseForbidden
 
 
 class ProjectListView(ListView):
@@ -14,6 +19,43 @@ class ProjectListView(ListView):
     ordering = '-created_at'
     paginate_by = 12
     template_name = 'projects/project_list.html'
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        skill = self.request.GET.get('skill')
+
+        if self.request.user.is_authenticated:
+            queryset = queryset.filter(Q(status="open") | Q(status="closed",
+                                       owner=self.request.user)
+                                       ).order_by('-created_at')
+        else:
+            queryset = queryset.filter(Q(status="open"))
+
+        if skill:
+            queryset = queryset.filter(
+                skills__name=skill).order_by('-created_at')
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        active_skill = self.request.GET.get('skill', '')
+        context['active_skill'] = active_skill
+        context['all_skills'] = Skill.objects.values_list('name', flat=True)
+
+        return context
+
+
+class FavoritesProjectsListView(LoginRequiredMixin, ListView):
+    model = Project
+    ordering = '-created_at'
+    paginate_by = 12
+    template_name = 'projects/favorite_projects.html'
+
+    def get_queryset(self):
+        queryset = self.request.user.favorites.all().order_by('-created_at')
+        return queryset
 
 
 class ProjectDetailView(DetailView):
@@ -42,8 +84,7 @@ def complete_project(request, pk):
 @require_POST
 def toggle_participate(request, pk):
     project = get_object_or_404(Project, pk=pk)
-
-    is_participating = request.user in project.participants.all()
+    is_participating = project.participants.filter(id=request.user.id).exists()
 
     if is_participating:
         project.participants.remove(request.user)
@@ -65,7 +106,20 @@ def toggle_participate(request, pk):
     })
 
 
-class ProjectCreateView(CreateView):
+@login_required
+@require_POST
+def toggle_favorite(request, pk):
+    project = get_object_or_404(Project, pk=pk)
+    if request.user.favorites.filter(id=pk).exists():
+        request.user.favorites.remove(project)
+        favorited = "Не избранный"
+    else:
+        request.user.favorites.add(project)
+        favorited = "Избранный"
+    return JsonResponse({"status": "ok", "favorited": favorited})
+
+
+class ProjectCreateView(LoginRequiredMixin, CreateView):
     model = Project
     form_class = ProjectForm
     template_name = 'projects/create-project.html'
@@ -90,10 +144,17 @@ class ProjectCreateView(CreateView):
         return reverse_lazy('projects:detail', kwargs={'pk': self.object.pk})
 
 
-class ProjectUpdateView(UpdateView):
+class ProjectUpdateView(LoginRequiredMixin, UpdateView):
     model = Project
     form_class = ProjectForm
     template_name = 'projects/create-project.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        project = self.get_object()
+        if project.owner != request.user:
+            # Возвращаем 403 ошибку
+            return HttpResponseForbidden('У вас нет прав на редактирование этого проекта')
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -102,3 +163,73 @@ class ProjectUpdateView(UpdateView):
 
     def get_success_url(self):
         return reverse_lazy('projects:detail', kwargs={'pk': self.object.pk})
+
+
+@login_required
+@require_POST
+def add_skill(request, pk):
+    created = False
+    added = False
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Неверный формат JSON'
+        }, status=400)
+
+    skill_name = data.get('name', '').strip().lower().capitalize()
+    skill_id = data.get('skill_id', '').strip()
+
+    project = get_object_or_404(Project, pk=pk)
+    if request.user.id != project.owner.id:
+        return JsonResponse({'error': 'Отказано в доступе'}, status=403)
+
+    if not skill_id and not skill_name:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Укажите name или id навыка'
+        }, status=400)
+
+    if skill_id:
+        skill = get_object_or_404(Skill, pk=skill_id)
+        if not request.user.skills.filter(id=skill_id).exists():
+            project.skills.add(skill)
+            skill_name = skill.name
+            added = True
+    elif skill_name:
+        new_skill = Skill.objects.create(name=skill_name)
+        project.skills.add(new_skill)
+        skill_id = new_skill.id
+        created = True
+        added = True
+
+    return JsonResponse(
+        {'id': skill_id, 'name': skill_name,
+         'created': created, 'added': added})
+
+
+@login_required
+@require_POST
+def remove_skill(request, pk, skill_id):
+
+    project = get_object_or_404(Project, pk=pk)
+    if request.user.id != project.owner.id:
+        return JsonResponse({'error': 'Отказано в доступе'}, status=403)
+
+    if not Skill.objects.filter(id=skill_id).exists():
+        return JsonResponse(
+            {'error': f'Не существует навыка с id: {skill_id}'}, status=404)
+
+    if not project.skills.filter(id=skill_id).exists():
+        return JsonResponse(
+            {'error':
+             f"""
+                     Проект {project.name}
+                     не обладает навыком с id: {skill_id}
+                     """
+             }, status=404)
+
+    project.skills.remove(skill_id)
+    return JsonResponse({'status': 'ok'})

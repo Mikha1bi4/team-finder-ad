@@ -1,10 +1,39 @@
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.contrib.auth.models import (AbstractBaseUser,
+                                        BaseUserManager, PermissionsMixin)
 from django.utils.translation import gettext_lazy as _
 from PIL import Image, ImageDraw, ImageFont
 import random
 from io import BytesIO
 from django.core.files.base import ContentFile
+from django.core.validators import URLValidator
+import re
+from django.core.exceptions import ValidationError
+
+
+def validate_github_url(link: str) -> None:
+
+    allowed_patterns = [
+        r'^https://github\.com/[\w\-\.]+/?$',
+        r'^https://www\.github\.com/[\w\-\.]+/?$',
+        r'^http://github\.com/[\w\-\.]+/?$',
+        r'^http://www\.github\.com/[\w\-\.]+/?$',
+    ]
+
+    validator = URLValidator()
+    try:
+        validator(link)
+    except ValidationError:
+        raise ValidationError(
+            'Ссылка не является валидной.'
+        )
+
+    is_github = any(re.match(pattern, link) for pattern in allowed_patterns)
+
+    if not is_github:
+        raise ValidationError(
+            'Ссылка не ведет на GitHub.'
+        )
 
 
 def generate_avatar(name, email):
@@ -72,6 +101,7 @@ class CustomUserManager(BaseUserManager):
     Кастомный менеджер пользователей,
     где email используется как уникальный идентификатор.
     """
+
     def create_user(self, email, password, **extra_fields):
         """
         Создаёт и сохраняет обычного пользователя.
@@ -82,7 +112,6 @@ class CustomUserManager(BaseUserManager):
         email = self.normalize_email(email)
         extra_fields.setdefault('name', '')
         extra_fields.setdefault('surname', '')
-        extra_fields.setdefault('phone', '')
 
         user = self.model(email=email, **extra_fields)
         user.set_password(password)  # Хешируем пароль
@@ -131,12 +160,16 @@ class User(AbstractBaseUser,  PermissionsMixin):
 
     # В рекомендациях написано, что это обязательное поле,
     #  но при регистрации оно не запрашивается
-    phone = models.CharField(max_length=12, null=True, blank=True)
-    github_url = models.URLField(blank=True, null=True)
+    phone = models.CharField(max_length=12, unique=True, null=True, blank=True)
+    github_url = models.URLField(blank=True, null=True,
+                                 validators=[validate_github_url])
     about = models.TextField(max_length=256, blank=True, null=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
+    favorites = models.ManyToManyField('projects.Project',
+                                       blank=True,
+                                       related_name='interested_users')
     skills = models.ManyToManyField(Skill, blank=True, related_name='users')
 
     USERNAME_FIELD = 'email'
@@ -146,11 +179,10 @@ class User(AbstractBaseUser,  PermissionsMixin):
     objects = CustomUserManager()
 
     def __str__(self):
-        if self.name and self.surname:
-            return f"{self.name} {self.surname}"
         return self.email
 
     def save(self, *args, **kwargs):
         if not self.pk:
-           self.avatar = generate_avatar(self.name, self.email)
+            self.avatar = generate_avatar(self.name, self.email)
+        self.full_clean()
         super().save(*args, **kwargs)
