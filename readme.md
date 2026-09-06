@@ -3,7 +3,6 @@
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org)
 [![Django Version](https://img.shields.io/badge/django-5.2%2B-green)](https://djangoproject.com)
 [![Docker](https://img.shields.io/badge/docker-ready-blue)](https://docker.com)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 TeamFinder — это платформа для поиска единомышленников и совместной работы над pet-проектами. Разработчики, дизайнеры и другие специалисты могут публиковать идеи проектов, находить команду и откликаться на предложения.
 
